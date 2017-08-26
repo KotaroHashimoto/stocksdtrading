@@ -13,6 +13,9 @@
 input int Magic_Number = 1;
 input double Lot_Percentage = 10;
 
+double minLot;
+double maxLot;
+
 string thisSymbol;
 double lotStep;
 
@@ -22,6 +25,9 @@ double lotStep;
 int OnInit()
   {
 //---
+
+  minLot = MarketInfo(Symbol(), MODE_MINLOT);
+  maxLot = MarketInfo(Symbol(), MODE_MAXLOT);
 
   thisSymbol = Symbol();
   lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
@@ -38,37 +44,64 @@ void OnDeinit(const int reason)
    
   }
   
-int hasPosition(int& ticket, double& selfLot) {
+void positionCount(int& buyPos, int& sellPos) {
+
+  buyPos = 0;
+  sellPos = 0;
 
   for(int i = 0; i < OrdersTotal(); i++) {
     if(OrderSelect(i, SELECT_BY_POS)) {
       if(!StringCompare(OrderSymbol(), thisSymbol) && (OrderMagicNumber() == Magic_Number)) {
       
-        ticket = OrderTicket();
-        selfLot = OrderLots();
-        
-        return OrderType();
+        if(OrderType() == OP_BUY) {
+          buyPos ++;
+        }
+        else if(OrderType() == OP_SELL) {
+          sellPos ++;
+        }
       }
     }
   }
-
-  return -1;
 }
 
 
-int hasPositionMirror() {
+void mirrorPositionCount(int& buyPos, int& sellPos) {
+
+  buyPos = 0;
+  sellPos = 0;
 
   for(int i = 0; i < OrdersTotal(); i++) {
     if(OrderSelect(i, SELECT_BY_POS)) {
       if(!StringCompare(OrderSymbol(), thisSymbol) && (OrderMagicNumber() != Magic_Number)) {
-        return OrderType();
+      
+        if(OrderType() == OP_BUY) {
+          buyPos ++;
+        }
+        else if(OrderType() == OP_SELL) {
+          sellPos ++;
+        }
       }
     }
   }
-
-  return -1;
 }
-  
+
+
+void getTicket(int& ticket, double& lot, int direction) {
+
+  for(int i = 0; i < OrdersTotal(); i++) {
+    if(OrderSelect(i, SELECT_BY_POS)) {
+      if(!StringCompare(OrderSymbol(), thisSymbol) && (OrderMagicNumber() == Magic_Number)) {
+
+        if(OrderType() == direction) {
+          ticket = OrderTicket();
+          lot = OrderLots();
+        }
+      }
+    }
+  }
+}
+
+
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
@@ -76,27 +109,42 @@ void OnTick()
   {
 //---
 
-  int ticket;
-  double selfLot;
+  int mirrorBuy, mirrorSell;
+  mirrorPositionCount(mirrorBuy, mirrorSell);
 
-  int selfPos = hasPosition(ticket, selfLot);
-  int mirrorPos = hasPositionMirror();
+  int selfBuy, selfSell;
+  positionCount(selfBuy, selfSell);
   
-  if(selfPos < 0 && 0 <= mirrorPos) {  
   
-    int pos = (mirrorPos == OP_BUY) ? OP_SELL : OP_BUY;
-    double price = (mirrorPos == OP_BUY) ? Bid : Ask;    
+  if(selfBuy < mirrorSell || selfSell < mirrorBuy) {  
+  
+    int pos = (selfSell < mirrorBuy) ? OP_SELL : OP_BUY;
+    double price = (selfSell < mirrorBuy) ? Bid : Ask;    
 
     double lot = (AccountEquity() * Lot_Percentage / 100.0) / 100000.0;
     lot = MathRound(lot / lotStep) * lotStep;
     
+    if(maxLot < lot) {
+      lot = maxLot;
+      Print("Lot size(", lot, ") is larger than max(", maxLot, "). Rounded to ", maxLot, ".");
+    }
+    else if(lot < minLot) {
+      lot = minLot;
+      Print("Lot size(", lot, ") is smaller than min(", minLot, "). Rounded to ", minLot, ".");
+    }    
+    
     int tk = OrderSend(thisSymbol, pos, lot, NormalizeDouble(price, Digits), 3, 0, 0, NULL, Magic_Number);    
   }
   
-  else if(mirrorPos < 0 && 0 <= selfPos) {  
-  
-    double price = (selfPos == OP_BUY) ? Bid : Ask;    
-    bool closed = OrderClose(ticket, selfLot, NormalizeDouble(price, Digits), 0);
+  if(mirrorSell < selfBuy || mirrorBuy < selfSell) {
+
+    int ticket;
+    double lotsize;
+
+    getTicket(ticket, lotsize, (mirrorSell < selfBuy) ? OP_BUY : OP_SELL);    
+    double price = (mirrorSell < selfBuy) ? Bid : Ask;    
+    
+    bool closed = OrderClose(ticket, lotsize, NormalizeDouble(price, Digits), 0);
   }
    
 }
