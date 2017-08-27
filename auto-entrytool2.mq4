@@ -36,6 +36,7 @@ void closePending() {
           int type = OrderType();
           if(type == OP_BUYSTOP || type == OP_SELLSTOP) {
             bool d = OrderDelete(OrderTicket());
+            i = -1;
           }
         }
       }
@@ -59,6 +60,42 @@ bool pendingExists() {
   }
   
   return False;
+}
+
+
+
+void closeOne() {
+
+  int count = 0;
+
+  for(int i = 0; i < OrdersTotal(); i++) {
+    if(OrderSelect(i, SELECT_BY_POS)) {
+      if(!StringCompare(OrderSymbol(), thisSymbol) && OrderMagicNumber() == Magic_Number) {
+        
+        int type = OrderType();
+        if(type == OP_BUYSTOP || type == OP_SELLSTOP) {
+          count ++;
+        }
+      }
+    }
+  }
+  
+  if(count != 1) {
+    return;
+  }
+  
+  for(int i = 0; i < OrdersTotal(); i++) {
+    if(OrderSelect(i, SELECT_BY_POS)) {
+      if(!StringCompare(OrderSymbol(), thisSymbol) && OrderMagicNumber() == Magic_Number) {
+        
+        int type = OrderType();
+        if(type == OP_BUYSTOP || type == OP_SELLSTOP) {
+          bool d = OrderDelete(OrderTicket());
+          i = -1;
+        }
+      }
+    }
+  }
 }
 
 
@@ -125,6 +162,8 @@ void OnTick()
       }
     }
   }
-  
+  else { 
+    closeOne();
+  }
 }
 //+------------------------------------------------------------------+
