@@ -11,8 +11,12 @@
 
 
 input int Magic_Number = 1;
-input int Entry_Time_H = 5;
+input int Entry_Time_H = 14;
 input int Entry_Time_M = 0;
+input int Exit_Time_H = 20;
+input int Exit_Time_M = 0;
+input int Calc_Period_H = 7;
+
 input double Lot_Size = 0.1;
 extern double SL_Short_Pips = 20;
 extern double TP_Short_Pips = 50;
@@ -24,20 +28,26 @@ double minSL;
 string thisSymbol;
 
 
-void closePending() {
+void closeAll() {
 
   datetime dt = TimeCurrent();
 
   for(int i = 0; i < OrdersTotal(); i++) {
     if(OrderSelect(i, SELECT_BY_POS)) {
       if(!StringCompare(OrderSymbol(), thisSymbol) && OrderMagicNumber() == Magic_Number) {
-        if(23 * 60 * 60 < (dt - OrderOpenTime())) {
-        
-          int type = OrderType();
-          if(type == OP_BUYSTOP || type == OP_SELLSTOP) {
-            bool d = OrderDelete(OrderTicket());
-            i = -1;
-          }
+      
+        int type = OrderType();
+        if(type == OP_BUYSTOP || type == OP_SELLSTOP) {
+          bool d = OrderDelete(OrderTicket());
+          i = -1;
+        }
+        else if(type == OP_BUY) {
+          bool c = OrderClose(OrderTicket(), OrderLots(), Bid, 3);
+          i = -1;
+        }
+        else if(type == OP_SELL) {
+          bool c = OrderClose(OrderTicket(), OrderLots(), Ask, 3);
+          i = -1;
         }
       }
     }
@@ -137,15 +147,16 @@ void OnTick()
   int h = TimeHour(dt);
   int m = TimeMinute(dt);
   
-  if(h == Entry_Time_H && m == Entry_Time_M) {
-    closePending();
+  if(h == Exit_Time_H && m == Exit_Time_M) {
+    closeAll();
+  }
+  
+  else if(h == Entry_Time_H && m == Entry_Time_M) {
     
     if(!pendingExists()) {
         
-//      double highPrice = High[iHighest(thisSymbol, PERIOD_CURRENT, MODE_HIGH, 24 * 60, 1)];
-//      double lowPrice = Low[iLowest(thisSymbol, PERIOD_CURRENT, MODE_LOW, 24 * 60, 1)];
-      double highPrice = High[iHighest(thisSymbol, PERIOD_H1, MODE_HIGH, 24, 1)];
-      double lowPrice = Low[iLowest(thisSymbol, PERIOD_H1, MODE_LOW, 24, 1)];
+      double highPrice = High[iHighest(thisSymbol, PERIOD_CURRENT, MODE_HIGH, Calc_Period_H * (60 / Period()), 1)];
+      double lowPrice = Low[iLowest(thisSymbol, PERIOD_CURRENT, MODE_LOW, Calc_Period_H * (60 / Period()), 1)];
       
       if(highPrice - Ask < minSL) {
         int bTicket = OrderSend(thisSymbol, OP_BUY, Lot_Size, NormalizeDouble(Ask, Digits), 3, NormalizeDouble(Ask - SL_Long_Pips, Digits), NormalizeDouble(Ask + TP_Long_Pips, Digits), NULL, Magic_Number);
