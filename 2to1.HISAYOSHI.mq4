@@ -33,21 +33,21 @@ int lastEntryTime;
 
 int getSignal() {
 
-  if(MathAbs(iCustom(NULL, PERIOD_CURRENT, indName, 3, 0)) == 0.05) { // 2
+  if(MathAbs(iCustom(NULL, PERIOD_CURRENT, indName, 3, 1)) == 0.05) { // 2
 
-    if(iCustom(NULL, PERIOD_CURRENT, indName, 0, 0) == 0.0) { //orange
+    if(iCustom(NULL, PERIOD_CURRENT, indName, 0, 1) == 0.0) { //orange
       return BUY_ENTRY;
     }
-    else if(iCustom(NULL, PERIOD_CURRENT, indName, 1, 0) == 0.0) { //blue
+    else if(iCustom(NULL, PERIOD_CURRENT, indName, 1, 1) == 0.0) { //blue
       return SELL_ENTRY;
     }
   }
-  if(MathAbs(iCustom(NULL, PERIOD_CURRENT, indName, 2, 0)) == 0.05) { // 1
+  if(MathAbs(iCustom(NULL, PERIOD_CURRENT, indName, 2, 1)) == 0.05) { // 1
     
-    if(iCustom(NULL, PERIOD_CURRENT, indName, 0, 0) == 0.0) { //orange
+    if(iCustom(NULL, PERIOD_CURRENT, indName, 0, 1) == 0.0) { //orange
       return BUY_EXIT;
     }
-    else if(iCustom(NULL, PERIOD_CURRENT, indName, 1, 0) == 0.0) { //blue
+    else if(iCustom(NULL, PERIOD_CURRENT, indName, 1, 1) == 0.0) { //blue
       return SELL_EXIT;
     }
   }
