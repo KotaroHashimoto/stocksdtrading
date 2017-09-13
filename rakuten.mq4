@@ -128,7 +128,7 @@ void iterateMonitorPrice() {
 
     if(sellAllows[i]) {
       if(!hasOrderSent(sellPrices[i], OP_SELL)) {
-        if(buyPrices[i] < Bid - minSL) {
+        if(sellPrices[i] < Bid - minSL) {
           int ticket = OrderSend(thisSymbol, OP_SELLSTOP, Entry_Lot, sellPrices[i], 3, 
                                  NormalizeDouble(sellPrices[i] + SL_pips, Digits), 0, NULL, Magic_Number);
         }
