@@ -43,14 +43,14 @@ bool hasOrderSent(double price, int type) {
     if(OrderSelect(i, SELECT_BY_POS)) {
       if(!StringCompare(OrderSymbol(), thisSymbol) && OrderMagicNumber() == Magic_Number) {
         if(OrderType() == OP_BUY || OrderType() == OP_BUYSTOP) {
-          if(type == OP_BUY || price == OrderOpenPrice()) {
-	    return True;
-	  }
+          if(type == OP_BUY && price == OrderOpenPrice()) {
+            return True;
+          }
         }
         else if(OrderType() == OP_SELL || OrderType() == OP_SELLSTOP) {
-          if(type == OP_SELL || price == OrderOpenPrice()) {
-	    return True;
-	  }
+          if(type == OP_SELL && price == OrderOpenPrice()) {
+            return True;
+          }
         }
       }
     }
