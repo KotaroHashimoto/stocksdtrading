@@ -45,10 +45,10 @@ int getSignal() {
   if(MathAbs(iCustom(NULL, PERIOD_CURRENT, indName, 2, 1)) == 0.05) { // 1
     
     if(iCustom(NULL, PERIOD_CURRENT, indName, 0, 1) == 0.0) { //orange
-      return BUY_EXIT;
+      return SELL_EXIT;
     }
     else if(iCustom(NULL, PERIOD_CURRENT, indName, 1, 1) == 0.0) { //blue
-      return SELL_EXIT;
+      return BUY_EXIT;
     }
   }
 
