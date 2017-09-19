@@ -1,4 +1,7 @@
-﻿using System;
+﻿#define DEBUG
+#undef DEBUG
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,8 +18,10 @@ namespace TickChart
 {
     public partial class Form1 : Form
     {
-        static private int N = 16;
-        static private int SIZE = 245;
+        static private bool vLineEnabled = true;
+        static private int N = 32;
+        static private int WIDTH = 245;
+        static private int HEIGHT = 245;
 
         private List<double> bids = null;
         private List<double> asks = null;
@@ -35,16 +40,15 @@ namespace TickChart
 
         private void update(double bid, double ask)
         {
+#if DEBUG
+            bids[index] = bids[(index + (N - 1)) % N] + rand.NextDouble() - 0.5;
+            asks[index] = bids[index] + 0.5 * rand.NextDouble();
+#else
             bids[index] = bid;
             asks[index] = ask;
-
-//            bids[index] = bids[(index + (N - 1)) % N] + rand.NextDouble() - 0.5;
-//            asks[index] = bids[index] + 0.5 * rand.NextDouble();
-
-            //            double p = (bids[index] + asks[index]) / 2.0;
+#endif
 
             index = (index + 1) % N;
-            //            return p;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -124,15 +128,22 @@ namespace TickChart
 
             comboBox1.SelectedText = "USD/JPY";
 
-            //            rand = new Random();
+            Form1_SizeChanged(sender, e);
 
-            //            timer.Tick += new EventHandler(onTimer);
-            //            timer.Interval = 1000;
-            //            timer.Enabled = true;
-
+#if DEBUG
+            rand = new Random();
+            timer.Tick += new EventHandler(onTimer);
+            timer.Interval = 1000;
+            timer.Enabled = true;
+#else
             fx = new ForexConnect("D25608381", "9954", this, comboBox1.Text);
+#endif
         }
 
+        void onTimer(object sender, EventArgs e)
+        {
+            onUpdate(1, 1);
+        }
 
         public void onUpdate(double bid, double ask)
         {
@@ -142,12 +153,12 @@ namespace TickChart
 
         int getCoordinate(double p, double min, double max)
         {
-            return 10 + SIZE - (int)Math.Round((double)SIZE * (p - min) / (max - min));
+            return 50 + HEIGHT - (int)Math.Round((double)HEIGHT * (p - min) / (max - min));
         }
 
         void drawGrid(double min, double max, PaintEventArgs e)
         {
-            int ln = 5;
+            int ln = 7;
             List<int> hLines = new List<int>(ln + 1);
 
             double step = (max - min) / (double)(2 * ln);
@@ -205,9 +216,19 @@ namespace TickChart
             int j = 0;
             foreach (int lp in hLines)
             {
-                Point[] g = new Point[] { new Point(10, lp), new Point(10 + SIZE, lp) };
+                Point[] g = new Point[] { new Point(10, lp), new Point(10 + WIDTH, lp) };
                 e.Graphics.DrawLines(gridPen, g);
-                e.Graphics.DrawString((min + step * (1 + 2 * (j++))).ToString(), font, Brushes.Black, SIZE + 15, lp - 5);
+                e.Graphics.DrawString((min + step * (1 + 2 * (j++))).ToString(), font, Brushes.Black, WIDTH + 15, lp - 5);
+            }
+
+            if (vLineEnabled) {
+                int tDelta = (int)(WIDTH / N);
+                for (int i = 0; i < N; i++)
+                {
+                    int x = 10 + tDelta * i;
+                    Point[] g = new Point[] { new Point(x, 50), new Point(x, 50 + HEIGHT) };
+                    e.Graphics.DrawLines(gridPen, g);
+                }
             }
 
             gridPen.Dispose();
@@ -219,15 +240,15 @@ namespace TickChart
 
             base.OnPaint(e);
 
-            Pen askPen = new Pen(Color.Red, 2);
-            Pen bidPen = new Pen(Color.Blue, 2);
+            Pen askPen = new Pen(Color.Red, 1);
+            Pen bidPen = new Pen(Color.Blue, 1);
 
             Point[] askPoint = new Point[N];
             Point[] bidPoint = new Point[N];
 
             double min = bids.Min();
             double max = asks.Max();
-            int tDelta = (int)(SIZE / N);
+            int tDelta = (int)(WIDTH / N);
 
             for (int i = index, t = 10, vi = 0; vi < N; i = (i + 1) % N, t += tDelta, vi++)
             {
@@ -245,11 +266,11 @@ namespace TickChart
 
             int pIndex = (index + (N - 1)) % N;
             //            Console.WriteLine(index);
-            e.Graphics.DrawLines(askPen, new Point[] { new Point(10, askPoint[N - 1].Y), new Point(10 + SIZE, askPoint[N - 1].Y) });
-            e.Graphics.DrawString(asks[pIndex].ToString(), font, Brushes.Red, SIZE + 15, askPoint[N - 1].Y - 6);
+            e.Graphics.DrawLines(askPen, new Point[] { new Point(10, askPoint[N - 1].Y), new Point(10 + WIDTH, askPoint[N - 1].Y) });
+            e.Graphics.DrawString(asks[pIndex].ToString(), font, Brushes.Red, WIDTH + 15, askPoint[N - 1].Y - 6);
 
-            e.Graphics.DrawLines(bidPen, new Point[] { new Point(10, bidPoint[N - 1].Y), new Point(10 + SIZE, bidPoint[N - 1].Y) });
-            e.Graphics.DrawString(bids[pIndex].ToString(), font, Brushes.Blue, SIZE + 15, bidPoint[N - 1].Y - 6);
+            e.Graphics.DrawLines(bidPen, new Point[] { new Point(10, bidPoint[N - 1].Y), new Point(10 + WIDTH, bidPoint[N - 1].Y) });
+            e.Graphics.DrawString(bids[pIndex].ToString(), font, Brushes.Blue, WIDTH + 15, bidPoint[N - 1].Y - 6);
 
             askPen.Dispose();
             bidPen.Dispose();
@@ -269,6 +290,18 @@ namespace TickChart
 
             index = (index + 1) % N;
             */
+        }
+
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            Control control = (Control)sender;
+            HEIGHT = control.Size.Height - 105;
+            WIDTH = control.Size.Width - 100;
+        }
+
+        private void Form1_DoubleClick(object sender, EventArgs e)
+        {
+            vLineEnabled = !vLineEnabled;
         }
     }
 
