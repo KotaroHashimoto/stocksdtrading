@@ -7,7 +7,7 @@
     <ProjectGuid>{EFB5B758-B501-4971-AD81-733A95D207F0}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>TickChart</RootNamespace>
-    <AssemblyName>FXCM rates</AssemblyName>
+    <AssemblyName>FXCMrates</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

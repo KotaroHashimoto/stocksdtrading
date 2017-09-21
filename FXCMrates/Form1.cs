@@ -208,7 +208,7 @@ namespace TickChart
                 hLines.Add(getCoordinate(min + step * (1 + 2 * i), min, max));
             }
 
-            Pen gridPen = new Pen(Color.Black, 1);
+            Pen gridPen = new Pen(Color.Gray, 1);
             gridPen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
 
             Font font = new Font("Consolas", 8);
