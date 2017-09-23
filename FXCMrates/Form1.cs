@@ -223,7 +223,7 @@ namespace TickChart
 
             if (vLineEnabled) {
                 int tDelta = (int)(WIDTH / N);
-                for (int i = 0; i < N; i++)
+                for (int i = 0; i < N; i += 2)
                 {
                     int x = 10 + tDelta * i;
                     Point[] g = new Point[] { new Point(x, 50), new Point(x, 50 + HEIGHT) };
