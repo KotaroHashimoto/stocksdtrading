@@ -135,13 +135,13 @@ void forceClose() {
 void updateMasks() {
 
   for(int i = 0; i < 5; i++) {
-    if(Ask + minSL < buyPrices[i]) {
+    if(Ask + minSL < buyPrices[i] && 0 < buyPrices[i]) {
       buyAllows[i] = (buyAllows[i] | True);
     }
   }
 
   for(int i = 0; i < 5; i++) {
-    if(sellPrices[i] < Bid - minSL) {
+    if(sellPrices[i] < Bid - minSL && 0 < sellPrices[i]) {
       sellAllows[i] = (sellAllows[i] | True);
     }
   }
@@ -201,12 +201,18 @@ void OnDeinit(const int reason)
   {
 //---
 
+  ObjectDelete(forceID);
   FileClose(fp);
   }
 
 void iterateMonitorPrice() {
 
   double spread = MathAbs(Ask - Bid);
+  
+  if(spread + n1 <= minSL) {
+    Print("SL(spread + n1) = " + DoubleToStr(spread + n1) + " is smaller than the minimal Stop Level " + DoubleToStr(minSL) + ".");
+    return;
+  }
 
   for(int i = 0; i < 5; i++) {
 
@@ -216,7 +222,8 @@ void iterateMonitorPrice() {
           int ticket = OrderSend(thisSymbol, OP_BUYSTOP, Entry_Lot, buyPrices[i], 3, 
                                  NormalizeDouble(buyPrices[i] - (spread + n1), Digits), 0, NULL, Magic_Number + buyMN[i]);
 
-          if(ticket <= 0 && Force_Entry) {
+          if(ticket < 0 && Force_Entry) {
+            Print("buy", buyPrices[i], ", ", buyPrices[i] - (spread + n1));
 	         ticket = OrderSend(thisSymbol, OP_BUY, Entry_Lot, NormalizeDouble(Ask, Digits), 100, NormalizeDouble(Ask - (spread + n1), Digits), 0, NULL, Magic_Number + buyMN[i]);
             ObjectSetText(forceID, TimeToString(TimeLocal()) + " force BUY ENTRY at " + DoubleToString(Ask), 14, "Arial", clrYellow);
             FileWrite(fp, TimeToString(TimeLocal()), "force BUY ENTRY", DoubleToString(Ask), DoubleToString(Entry_Lot));
@@ -232,7 +239,8 @@ void iterateMonitorPrice() {
           int ticket = OrderSend(thisSymbol, OP_SELLSTOP, Entry_Lot, sellPrices[i], 3, 
                                  NormalizeDouble(sellPrices[i] + (spread + n1), Digits), 0, NULL, Magic_Number + sellMN[i]);
 
-          if(ticket <= 0 && Force_Entry) {
+          if(ticket < 0 && Force_Entry) {
+            Print("sell ", sellPrices[i], ", ", sellPrices[i] + (spread + n1));
             ticket = OrderSend(thisSymbol, OP_SELL, Entry_Lot, NormalizeDouble(Bid, Digits), 100, NormalizeDouble(Bid + (spread + n1), Digits), 0, NULL, Magic_Number + sellMN[i]);
             ObjectSetText(forceID, TimeToString(TimeLocal()) + " force SELL ENTRY at " + DoubleToString(Bid), 14, "Arial", clrYellow);
             FileWrite(fp, TimeToString(TimeLocal()), "force SELL ENTRY", DoubleToString(Bid), DoubleToString(Entry_Lot));	    
